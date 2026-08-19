@@ -2,10 +2,10 @@
 
 import { FormEvent, useEffect, useState } from "react";
 
-type AdFormat = "text" | "image" | "mixed";
+type AdFormat = "text" | "image" | "mixed" | "custom";
 
 type Dashboard = {
-  ads: Array<{ id: string; name: string; headline: string; active: boolean; weight: number; format: AdFormat }>;
+  ads: Array<{ id: string; name: string; headline: string; active: boolean; weight: number; format: AdFormat; waitSeconds: number }>;
   sites: Array<{ id: string; name: string; domain: string; active: boolean }>;
   metrics: { impressions: number; clicks: number; ctr: number };
 };
@@ -18,27 +18,14 @@ export default function AdminPage() {
 
   useEffect(() => {
     const saved = sessionStorage.getItem("mads_admin_key");
-    if (saved) {
-      setAdminKey(saved);
-      void load(saved);
-    }
+    if (saved) { setAdminKey(saved); void load(saved); }
   }, []);
 
   async function load(key = adminKey) {
-    if (!key) {
-      setStatus("Enter your admin key first.");
-      return;
-    }
-    const response = await fetch("/api/admin", {
-      cache: "no-store",
-      headers: { "x-mads-admin-key": key },
-    });
+    if (!key) { setStatus("Enter your admin key first."); return; }
+    const response = await fetch("/api/admin", { cache: "no-store", headers: { "x-mads-admin-key": key } });
     const payload = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      setData(null);
-      setStatus(payload.error || "Could not load dashboard");
-      return;
-    }
+    if (!response.ok) { setData(null); setStatus(payload.error || "Could not load dashboard"); return; }
     sessionStorage.setItem("mads_admin_key", key);
     setData(payload);
     setStatus("Connected");
@@ -55,10 +42,7 @@ export default function AdminPage() {
       body: JSON.stringify({ kind, ...body }),
     });
     const payload = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      setStatus(payload.error || "Could not save");
-      return;
-    }
+    if (!response.ok) { setStatus(payload.error || "Could not save"); return; }
     event.currentTarget.reset();
     if (kind === "ad") setAdFormat("mixed");
     setStatus("Saved");
@@ -68,18 +52,14 @@ export default function AdminPage() {
   async function deleteAd(id: string, name: string) {
     if (!window.confirm(`Delete ${name}? This removes it from serving, but keeps historical analytics.`)) return;
     setStatus("Deleting ad…");
-    const response = await fetch(`/api/admin?id=${encodeURIComponent(id)}`, {
-      method: "DELETE",
-      headers: { "x-mads-admin-key": adminKey },
-    });
+    const response = await fetch(`/api/admin?id=${encodeURIComponent(id)}`, { method: "DELETE", headers: { "x-mads-admin-key": adminKey } });
     const payload = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      setStatus(payload.error || "Could not delete ad");
-      return;
-    }
+    if (!response.ok) { setStatus(payload.error || "Could not delete ad"); return; }
     setStatus("Ad deleted");
     await load();
   }
+
+  const formatLabel = (format: AdFormat) => format === "text" ? "Text + button" : format === "image" ? "Image + button" : format === "custom" ? "Custom code" : "Mixed";
 
   return (
     <main className="shell">
@@ -114,7 +94,7 @@ export default function AdminPage() {
 
         <div className="panel">
           <h2>Create an ad</h2>
-          <p>Choose exactly how the creative should appear.</p>
+          <p>Choose the creative style and how long users must wait before Continue unlocks.</p>
           <form onSubmit={(event) => submit("ad", event)} className="list">
             <input name="name" placeholder="Internal name" required style={inputStyle} />
             <label style={{ fontWeight: 700 }}>Creative type</label>
@@ -122,19 +102,36 @@ export default function AdminPage() {
               <option value="text">Text + button</option>
               <option value="image">Image + button</option>
               <option value="mixed">Mixed, image + text + button</option>
+              <option value="custom">Custom HTML / iframe / interactive</option>
             </select>
             <p className="muted" style={{ marginTop: -6 }}>
               {adFormat === "text" && "Headline and optional description, with no image."}
-              {adFormat === "image" && "The image becomes the main creative, with only the action button underneath."}
+              {adFormat === "image" && "The image is the main creative, with an action button underneath."}
               {adFormat === "mixed" && "Image, headline, description, and action button together."}
+              {adFormat === "custom" && "Custom HTML runs inside a sandboxed iframe. It cannot access the host app's DOM, cookies, or storage."}
             </p>
 
-            {adFormat !== "image" && <input name="headline" placeholder="Headline" required style={inputStyle} />}
-            {adFormat !== "image" && <textarea name="description" placeholder="Description (optional)" style={{ ...inputStyle, minHeight: 90 }} />}
-            {adFormat !== "text" && <input name="imageUrl" placeholder="Image URL" required style={inputStyle} />}
+            {adFormat !== "image" && adFormat !== "custom" && <input name="headline" placeholder="Headline" required style={inputStyle} />}
+            {adFormat !== "image" && adFormat !== "custom" && <textarea name="description" placeholder="Description (optional)" style={{ ...inputStyle, minHeight: 90 }} />}
+            {adFormat !== "text" && adFormat !== "custom" && <input name="imageUrl" placeholder="Image URL" required style={inputStyle} />}
 
-            <input name="destinationUrl" placeholder="https://…" required style={inputStyle} />
-            <input name="buttonLabel" placeholder="Learn more" style={inputStyle} />
+            {adFormat === "custom" ? (
+              <>
+                <label style={{ fontWeight: 700 }}>Custom code</label>
+                <textarea name="customHtml" required placeholder={'Example:\n<iframe src="https://example.com" style="width:100%;height:100%;border:0"></iframe>'} style={{ ...inputStyle, minHeight: 220, fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }} />
+                <p className="muted" style={{ marginTop: -6 }}>HTML, CSS, iframes, and JavaScript are allowed inside the sandbox. Top-level navigation and access to the host page are blocked.</p>
+              </>
+            ) : (
+              <>
+                <input name="destinationUrl" placeholder="https://…" required style={inputStyle} />
+                <input name="buttonLabel" placeholder="Learn more" style={inputStyle} />
+              </>
+            )}
+
+            <label style={{ fontWeight: 700 }}>Wait before Continue</label>
+            <input name="waitSeconds" type="number" min="0" max="30" defaultValue="3" style={inputStyle} />
+            <p className="muted" style={{ marginTop: -6 }}>0 unlocks Continue immediately. Maximum is 30 seconds.</p>
+
             <label style={{ fontWeight: 700 }}>Frequency weight</label>
             <input name="weight" type="number" min="1" max="1000" defaultValue="100" style={inputStyle} />
             <p className="muted" style={{ marginTop: -6 }}>Higher weight means this ad is chosen more often relative to your other active ads.</p>
@@ -157,7 +154,7 @@ export default function AdminPage() {
               <div className="row" key={ad.id} style={{ alignItems: "center", gap: 14 }}>
                 <div style={{ flex: 1 }}>
                   <strong>{ad.name}</strong>
-                  <div className="muted">{ad.format === "text" ? "Text + button" : ad.format === "image" ? "Image + button" : "Mixed"}<br />Frequency weight {ad.weight}</div>
+                  <div className="muted">{formatLabel(ad.format)} · {ad.waitSeconds ?? 3}s wait<br />Frequency weight {ad.weight}</div>
                 </div>
                 <span className="badge">{ad.active ? "Active" : "Off"}</span>
                 <button onClick={() => void deleteAd(ad.id, ad.name)} style={dangerButtonStyle}>Delete</button>
