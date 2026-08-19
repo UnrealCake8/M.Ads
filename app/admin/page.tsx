@@ -11,14 +11,35 @@ type Dashboard = {
 export default function AdminPage() {
   const [data, setData] = useState<Dashboard | null>(null);
   const [adminKey, setAdminKey] = useState("");
-  const [status, setStatus] = useState("");
+  const [status, setStatus] = useState("Enter your admin key to load M Ads data.");
 
-  async function load() {
-    const response = await fetch("/api/admin", { cache: "no-store" });
-    if (response.ok) setData(await response.json());
+  useEffect(() => {
+    const saved = sessionStorage.getItem("mads_admin_key");
+    if (saved) {
+      setAdminKey(saved);
+      void load(saved);
+    }
+  }, []);
+
+  async function load(key = adminKey) {
+    if (!key) {
+      setStatus("Enter your admin key first.");
+      return;
+    }
+    const response = await fetch("/api/admin", {
+      cache: "no-store",
+      headers: { "x-mads-admin-key": key },
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      setData(null);
+      setStatus(payload.error || "Could not load dashboard");
+      return;
+    }
+    sessionStorage.setItem("mads_admin_key", key);
+    setData(payload);
+    setStatus("Connected");
   }
-
-  useEffect(() => { void load(); }, []);
 
   async function submit(kind: "site" | "ad", event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -46,6 +67,16 @@ export default function AdminPage() {
   return (
     <main className="shell">
       <nav className="nav"><div className="brand">M Ads Admin</div><a className="pill" href="/">Back home</a></nav>
+
+      <section className="panel section">
+        <h2>Admin access</h2>
+        <p>Your key stays in this browser tab/session and is sent only to the M Ads server.</p>
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+          <input value={adminKey} onChange={(event) => setAdminKey(event.target.value)} type="password" placeholder="MADS_ADMIN_KEY" style={{ ...inputStyle, flex: 1 }} />
+          <button onClick={() => void load()} style={buttonStyle}>Load dashboard</button>
+        </div>
+        {status && <p className="muted">{status}</p>}
+      </section>
 
       <section className="grid">
         <div className="panel stat"><strong>{data?.metrics.impressions ?? 0}</strong><span>impressions</span></div>
@@ -78,13 +109,6 @@ export default function AdminPage() {
             <button style={buttonStyle}>Create ad</button>
           </form>
         </div>
-      </section>
-
-      <section className="panel section">
-        <h2>Admin key</h2>
-        <p>Required for creating sites and ads when <code>MADS_ADMIN_KEY</code> is configured.</p>
-        <input value={adminKey} onChange={(event) => setAdminKey(event.target.value)} type="password" placeholder="Admin key" style={inputStyle} />
-        {status && <p className="muted">{status}</p>}
       </section>
 
       <section className="hero section">
