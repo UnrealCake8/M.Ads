@@ -1,3 +1,5 @@
+export type AdFormat = "text" | "image" | "mixed";
+
 export type Ad = {
   id: string;
   name: string;
@@ -6,6 +8,7 @@ export type Ad = {
   imageUrl?: string;
   destinationUrl: string;
   buttonLabel: string;
+  format: AdFormat;
   active: boolean;
   weight: number;
   createdAt: string;
@@ -59,14 +62,17 @@ async function rest<T>(path: string, init: RequestInit = {}): Promise<T> {
 }
 
 function adFromRow(row: Row): Ad {
+  const rawFormat = String(row.format || "mixed");
+  const format: AdFormat = rawFormat === "text" || rawFormat === "image" ? rawFormat : "mixed";
   return {
     id: String(row.id),
     name: String(row.name),
-    headline: String(row.headline),
+    headline: String(row.headline || ""),
     description: String(row.description || ""),
     imageUrl: row.image_url ? String(row.image_url) : undefined,
     destinationUrl: String(row.destination_url),
     buttonLabel: String(row.button_label),
+    format,
     active: Boolean(row.active),
     weight: Number(row.weight),
     createdAt: String(row.created_at),
@@ -123,6 +129,7 @@ export async function createAd(input: Omit<Ad, "id" | "createdAt">): Promise<Ad>
       image_url: input.imageUrl || null,
       destination_url: input.destinationUrl,
       button_label: input.buttonLabel,
+      format: input.format,
       active: input.active,
       weight: input.weight,
     }),
