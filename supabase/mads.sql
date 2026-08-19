@@ -19,9 +19,11 @@ create table if not exists public.mads_ads (
   headline text not null default '' check (char_length(headline) <= 120),
   description text not null default '' check (char_length(description) <= 240),
   image_url text,
-  destination_url text not null check (char_length(destination_url) <= 500),
+  destination_url text not null default '' check (char_length(destination_url) <= 500),
   button_label text not null default 'Learn more' check (char_length(button_label) <= 40),
-  format text not null default 'mixed' check (format in ('text', 'image', 'mixed')),
+  format text not null default 'mixed' check (format in ('text', 'image', 'mixed', 'custom')),
+  custom_html text,
+  wait_seconds integer not null default 3 check (wait_seconds between 0 and 30),
   active boolean not null default true,
   weight integer not null default 100 check (weight between 1 and 1000),
   created_at timestamptz not null default now(),
@@ -44,7 +46,6 @@ create index if not exists mads_events_site_idx on public.mads_events (site_id);
 create index if not exists mads_events_ad_idx on public.mads_events (ad_id);
 create index if not exists mads_events_type_idx on public.mads_events (type);
 
--- M Ads is server-mediated. Browser clients should not talk directly to these tables.
 alter table public.mads_sites enable row level security;
 alter table public.mads_ads enable row level security;
 alter table public.mads_events enable row level security;
