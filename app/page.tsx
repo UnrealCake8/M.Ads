@@ -7,8 +7,9 @@ export default function HomePage() {
         <div className="brand">M Ads</div>
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
           <Link className="pill" href="/publisher">Publishers</Link>
+          <Link className="pill" href="/payouts">Payouts</Link>
+          <Link className="pill" href="/contact">Contact</Link>
           <Link className="pill" href="/docs">API Docs</Link>
-          <Link className="pill" href="/admin">Open admin</Link>
         </div>
       </nav>
 
