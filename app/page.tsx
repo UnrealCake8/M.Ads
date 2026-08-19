@@ -17,33 +17,19 @@ export default function HomePage() {
         <div className="panel">
           <span className="tag">Privacy-first advertising</span>
           <h1>Ads without following people around.</h1>
-          <p>
-            M Ads lets developers trigger short, all-ages advertisements at deliberate moments in their apps and websites. No behavioral profiles, no cross-site tracking, and no creepy retargeting.
-          </p>
+          <p>M Ads lets developers trigger short, all-ages advertisements at deliberate moments in their apps and websites. No behavioral profiles, no cross-site tracking, and no creepy retargeting.</p>
           <div className="section code">{`<script src="https://ads.mplace.cc/sdk.js" data-site="SITE_ID"></script>\n\nawait MAds.show({ placement: "quiz-complete" });`}</div>
-          <div style={{ marginTop: 16, display: "flex", gap: 10, flexWrap: "wrap" }}>
-            <Link className="pill" href="/publisher">Create a publisher account →</Link>
-            <Link className="pill" href="/docs">Read the API docs →</Link>
-          </div>
+          <div style={{ marginTop: 16, display: "flex", gap: 10, flexWrap: "wrap" }}><Link className="pill" href="/publisher">Create a publisher account →</Link><Link className="pill" href="/docs">Read the API docs →</Link></div>
         </div>
-
-        <aside className="panel">
-          <h2>Built around three rules</h2>
-          <div className="list">
-            <div className="row"><div><strong>All-ages ads</strong><div className="muted">You control every creative that enters the network.</div></div><span className="badge">Safe</span></div>
-            <div className="row"><div><strong>No user profiles</strong><div className="muted">Events belong to sites and ads, not people.</div></div><span className="badge">Private</span></div>
-            <div className="row"><div><strong>Developer-triggered</strong><div className="muted">Ads appear only when the app intentionally calls them.</div></div><span className="badge">Simple</span></div>
-          </div>
-        </aside>
+        <aside className="panel"><h2>Built around three rules</h2><div className="list"><div className="row"><div><strong>All-ages ads</strong><div className="muted">Every creative is reviewed before it enters the network.</div></div><span className="badge">Safe</span></div><div className="row"><div><strong>No user profiles</strong><div className="muted">Events belong to sites and ads, not people.</div></div><span className="badge">Private</span></div><div className="row"><div><strong>Developer-triggered</strong><div className="muted">Ads appear only when the app intentionally calls them.</div></div><span className="badge">Simple</span></div></div></aside>
       </section>
 
-      <section className="grid">
-        <div className="panel stat"><strong>3 sec</strong><span>default wait before continue</span></div>
-        <div className="panel stat"><strong>0</strong><span>behavioral profiles created</span></div>
-        <div className="panel stat"><strong>1 call</strong><span>to trigger an ad</span></div>
-      </section>
+      <section className="grid"><div className="panel stat"><strong>3 sec</strong><span>default wait before continue</span></div><div className="panel stat"><strong>0</strong><span>behavioral profiles created</span></div><div className="panel stat"><strong>1 call</strong><span>to trigger an ad</span></div></section>
 
-      <footer className="footer">M Ads · Advertising without surveillance.</footer>
+      <footer className="footer">
+        <div>M Ads · Advertising without surveillance.</div>
+        <div style={{display:"flex",gap:14,flexWrap:"wrap",marginTop:10}}><Link href="/advertising-standards">Advertising Standards</Link><Link href="/terms">Publisher Terms</Link><Link href="/privacy">Privacy</Link><Link href="/contact">Contact</Link></div>
+      </footer>
     </main>
   );
 }
