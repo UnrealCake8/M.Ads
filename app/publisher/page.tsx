@@ -123,7 +123,14 @@ export default function PublisherPage() {
   if (!user) {
     return (
       <main className="shell">
-        <nav className="nav"><a className="brand" href="/">M Ads</a><a className="pill" href="/docs">API Docs</a></nav>
+        <nav className="nav">
+          <a className="brand" href="/">M Ads</a>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            <a className="pill" href="/payouts">Payouts</a>
+            <a className="pill" href="/contact">Contact</a>
+            <a className="pill" href="/docs">API Docs</a>
+          </div>
+        </nav>
         <section className="hero">
           <div className="panel">
             <span className="tag">Publisher account</span>
@@ -156,6 +163,8 @@ export default function PublisherPage() {
         <div><a className="brand" href="/">M Ads</a><div className="muted">Publisher portal</div></div>
         <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", justifyContent: "flex-end" }}>
           <span className="muted">{user.email}</span>
+          <a className="pill" href="/payouts">Payouts</a>
+          <a className="pill" href="/contact">Contact</a>
           <a className="pill" href="/docs">API Docs</a>
           <button onClick={() => void logout()} style={secondaryButtonStyle}>Sign out</button>
         </div>
