@@ -7,11 +7,13 @@ create table if not exists public.mads_sites (
   id text primary key default ('site_' || substr(replace(gen_random_uuid()::text, '-', ''), 1, 12)),
   name text not null check (char_length(name) between 1 and 80),
   domain text not null check (char_length(domain) between 1 and 180),
+  owner_user_id uuid references auth.users(id) on delete cascade,
   active boolean not null default true,
   created_at timestamptz not null default now()
 );
 
 create unique index if not exists mads_sites_domain_unique on public.mads_sites (lower(domain));
+create index if not exists mads_sites_owner_user_id_idx on public.mads_sites (owner_user_id);
 
 create table if not exists public.mads_ads (
   id text primary key default ('ad_' || substr(replace(gen_random_uuid()::text, '-', ''), 1, 12)),
@@ -50,5 +52,7 @@ alter table public.mads_sites enable row level security;
 alter table public.mads_ads enable row level security;
 alter table public.mads_events enable row level security;
 
--- No anon/authenticated policies are intentionally created.
--- The Vercel server uses a Supabase service-role/secret key, which bypasses RLS.
+-- No anon/authenticated table policies are intentionally created.
+-- Publisher operations are mediated by M Ads server routes, which verify the
+-- Supabase Auth user and then use the server secret to access only that user's sites.
+-- Admin-created sites keep owner_user_id null.

@@ -20,6 +20,7 @@ export type Site = {
   id: string;
   name: string;
   domain: string;
+  ownerUserId?: string;
   active: boolean;
   createdAt: string;
 };
@@ -67,11 +68,22 @@ function adFromRow(row: Row): Ad {
 }
 
 function siteFromRow(row: Row): Site {
-  return { id: String(row.id), name: String(row.name), domain: String(row.domain), active: Boolean(row.active), createdAt: String(row.created_at) };
+  return {
+    id: String(row.id),
+    name: String(row.name),
+    domain: String(row.domain),
+    ownerUserId: row.owner_user_id ? String(row.owner_user_id) : undefined,
+    active: Boolean(row.active),
+    createdAt: String(row.created_at),
+  };
 }
 
 export async function listAds(): Promise<Ad[]> { return (await rest<Row[]>("mads_ads?select=*&deleted_at=is.null&order=created_at.desc")).map(adFromRow); }
 export async function listSites(): Promise<Site[]> { return (await rest<Row[]>("mads_sites?select=*&order=created_at.desc")).map(siteFromRow); }
+export async function listPublisherSites(ownerUserId: string): Promise<Site[]> {
+  const rows = await rest<Row[]>(`mads_sites?select=*&owner_user_id=eq.${encodeURIComponent(ownerUserId)}&order=created_at.desc`);
+  return rows.map(siteFromRow);
+}
 export async function getActiveSite(id: string): Promise<Site | null> {
   const rows = await rest<Row[]>(`mads_sites?select=*&id=eq.${encodeURIComponent(id)}&active=eq.true&limit=1`);
   return rows[0] ? siteFromRow(rows[0]) : null;
@@ -81,8 +93,17 @@ export async function getActiveAd(id: string): Promise<Ad | null> {
   return rows[0] ? adFromRow(rows[0]) : null;
 }
 
-export async function createSite(input: { name: string; domain: string }): Promise<Site> {
-  const rows = await rest<Row[]>("mads_sites", { method: "POST", headers: { Prefer: "return=representation" }, body: JSON.stringify({ ...input, active: true }) });
+export async function createSite(input: { name: string; domain: string; ownerUserId?: string }): Promise<Site> {
+  const rows = await rest<Row[]>("mads_sites", {
+    method: "POST",
+    headers: { Prefer: "return=representation" },
+    body: JSON.stringify({
+      name: input.name,
+      domain: input.domain,
+      owner_user_id: input.ownerUserId || null,
+      active: true,
+    }),
+  });
   return siteFromRow(rows[0]);
 }
 
@@ -109,6 +130,19 @@ export async function recordEvent(event: Omit<MetricEvent, "createdAt">) {
 export async function getMetrics() {
   const [impressions, clicks] = await Promise.all([rest<Row[]>("mads_events?select=id&type=eq.impression"), rest<Row[]>("mads_events?select=id&type=eq.click")]);
   return { impressions: impressions.length, clicks: clicks.length, ctr: impressions.length ? (clicks.length / impressions.length) * 100 : 0 };
+}
+
+export async function getSiteMetrics(siteId: string) {
+  const encoded = encodeURIComponent(siteId);
+  const [impressions, clicks] = await Promise.all([
+    rest<Row[]>(`mads_events?select=id&site_id=eq.${encoded}&type=eq.impression`),
+    rest<Row[]>(`mads_events?select=id&site_id=eq.${encoded}&type=eq.click`),
+  ]);
+  return {
+    impressions: impressions.length,
+    clicks: clicks.length,
+    ctr: impressions.length ? (clicks.length / impressions.length) * 100 : 0,
+  };
 }
 
 export function chooseAd(ads: Ad[]): Ad | null {
