@@ -24,13 +24,12 @@ export async function GET(request: NextRequest) {
         imageUrl: ad.imageUrl,
         destinationUrl: ad.destinationUrl,
         buttonLabel: ad.buttonLabel,
+        customHtml: ad.format === "custom" ? ad.customHtml : undefined,
+        waitSeconds: ad.waitSeconds,
       },
       placement,
     }, {
-      headers: {
-        "Cache-Control": "no-store",
-        "Access-Control-Allow-Origin": "*",
-      },
+      headers: { "Cache-Control": "no-store", "Access-Control-Allow-Origin": "*" },
     });
   } catch (error) {
     console.error("M Ads serving error", error);
