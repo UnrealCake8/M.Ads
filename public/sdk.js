@@ -19,13 +19,17 @@
       var overlay = document.createElement("div");
       overlay.setAttribute("role", "dialog");
       overlay.setAttribute("aria-modal", "true");
-      overlay.style.cssText = "position:fixed;inset:0;z-index:2147483647;background:rgba(10,12,16,.82);display:flex;align-items:center;justify-content:center;padding:20px;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;";
+      overlay.style.cssText = "position:fixed;inset:0;z-index:2147483647;background:radial-gradient(circle at top,rgba(50,55,70,.45),rgba(7,9,13,.94) 55%);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;padding:20px;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;animation:madsFade .2s ease;";
+
+      var style = document.createElement("style");
+      style.textContent = "@keyframes madsFade{from{opacity:0}to{opacity:1}}@keyframes madsPop{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}";
+      overlay.appendChild(style);
 
       var card = document.createElement("div");
-      card.style.cssText = "width:min(92vw,520px);background:#fff;color:#111;border-radius:22px;padding:24px;box-shadow:0 24px 80px rgba(0,0,0,.35);text-align:left;";
+      card.style.cssText = "width:min(94vw,560px);overflow:hidden;background:linear-gradient(180deg,#ffffff,#f8fafc);color:#0f172a;border:1px solid rgba(255,255,255,.7);border-radius:28px;box-shadow:0 30px 100px rgba(0,0,0,.45);animation:madsPop .24s ease;text-align:left;";
 
-      var image = ad.imageUrl ? '<img src="' + ad.imageUrl.replace(/\"/g, "&quot;") + '" alt="" style="width:100%;max-height:260px;object-fit:cover;border-radius:16px;margin-bottom:18px">' : "";
-      card.innerHTML = '<div style="font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;opacity:.55;margin-bottom:10px">Advertisement</div>' + image + '<h2 style="font-size:26px;line-height:1.1;margin:0 0 10px">' + ad.headline + '</h2><p style="font-size:15px;line-height:1.5;margin:0 0 22px;color:#4b5563">' + ad.description + '</p><div style="display:flex;gap:10px;align-items:center;justify-content:space-between"><a target="_blank" rel="noopener noreferrer" href="' + ad.destinationUrl + '" style="display:inline-flex;align-items:center;justify-content:center;padding:11px 16px;border-radius:999px;background:#111;color:#fff;text-decoration:none;font-weight:700">' + ad.buttonLabel + '</a><button type="button" disabled style="border:0;background:transparent;font:inherit;color:#6b7280;cursor:default">Continue in <span data-mads-count>3</span></button></div>';
+      var image = ad.imageUrl ? '<div style="position:relative;background:#e5e7eb"><img src="' + ad.imageUrl.replace(/\"/g, "&quot;") + '" alt="" style="display:block;width:100%;height:260px;object-fit:cover"><div style="position:absolute;inset:auto 0 0 0;height:90px;background:linear-gradient(transparent,rgba(0,0,0,.18))"></div></div>' : '';
+      card.innerHTML = image + '<div style="padding:24px 24px 22px"><div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px"><span style="display:inline-flex;align-items:center;gap:7px;padding:6px 10px;border-radius:999px;background:#eef2ff;color:#3730a3;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase">M Ads · Advertisement</span><span style="font-size:12px;color:#94a3b8">All-ages ad</span></div><h2 style="font-size:30px;line-height:1.08;margin:0 0 10px;letter-spacing:-.02em">' + ad.headline + '</h2><p style="font-size:15px;line-height:1.6;margin:0 0 22px;color:#64748b">' + ad.description + '</p><div style="display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap"><a target="_blank" rel="noopener noreferrer" href="' + ad.destinationUrl + '" style="display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 18px;border-radius:14px;background:#0f172a;color:#fff;text-decoration:none;font-weight:800;box-shadow:0 8px 20px rgba(15,23,42,.18)">' + ad.buttonLabel + '</a><button type="button" disabled style="min-height:44px;border:1px solid #e2e8f0;border-radius:14px;background:#fff;padding:0 16px;font:inherit;font-weight:700;color:#94a3b8;cursor:default">Continue in <span data-mads-count>3</span></button></div></div>';
 
       overlay.appendChild(card);
       document.body.appendChild(overlay);
@@ -45,7 +49,8 @@
           if (button) {
             button.disabled = false;
             button.style.cursor = "pointer";
-            button.style.color = "#111";
+            button.style.color = "#0f172a";
+            button.style.background = "#f8fafc";
             button.innerHTML = "Continue";
             button.addEventListener("click", function () {
               overlay.remove();
@@ -74,5 +79,5 @@
     }
   }
 
-  window.MAds = { show: show, version: "0.1.0" };
+  window.MAds = { show: show, version: "0.2.0" };
 })();
