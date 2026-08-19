@@ -2,8 +2,10 @@
 
 import { FormEvent, useEffect, useState } from "react";
 
+type AdFormat = "text" | "image" | "mixed";
+
 type Dashboard = {
-  ads: Array<{ id: string; name: string; headline: string; active: boolean; weight: number }>;
+  ads: Array<{ id: string; name: string; headline: string; active: boolean; weight: number; format: AdFormat }>;
   sites: Array<{ id: string; name: string; domain: string; active: boolean }>;
   metrics: { impressions: number; clicks: number; ctr: number };
 };
@@ -12,6 +14,7 @@ export default function AdminPage() {
   const [data, setData] = useState<Dashboard | null>(null);
   const [adminKey, setAdminKey] = useState("");
   const [status, setStatus] = useState("Enter your admin key to load M Ads data.");
+  const [adFormat, setAdFormat] = useState<AdFormat>("mixed");
 
   useEffect(() => {
     const saved = sessionStorage.getItem("mads_admin_key");
@@ -48,10 +51,7 @@ export default function AdminPage() {
     const body = Object.fromEntries(form.entries());
     const response = await fetch("/api/admin", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-mads-admin-key": adminKey,
-      },
+      headers: { "Content-Type": "application/json", "x-mads-admin-key": adminKey },
       body: JSON.stringify({ kind, ...body }),
     });
     const payload = await response.json().catch(() => ({}));
@@ -60,6 +60,7 @@ export default function AdminPage() {
       return;
     }
     event.currentTarget.reset();
+    if (kind === "ad") setAdFormat("mixed");
     setStatus("Saved");
     await load();
   }
@@ -113,17 +114,30 @@ export default function AdminPage() {
 
         <div className="panel">
           <h2>Create an ad</h2>
-          <p>Only creatives you add here can ever be served by M Ads.</p>
+          <p>Choose exactly how the creative should appear.</p>
           <form onSubmit={(event) => submit("ad", event)} className="list">
             <input name="name" placeholder="Internal name" required style={inputStyle} />
-            <input name="headline" placeholder="Headline" required style={inputStyle} />
-            <textarea name="description" placeholder="Description" style={{...inputStyle, minHeight: 90}} />
-            <input name="imageUrl" placeholder="Image URL (optional)" style={inputStyle} />
+            <label style={{ fontWeight: 700 }}>Creative type</label>
+            <select name="format" value={adFormat} onChange={(event) => setAdFormat(event.target.value as AdFormat)} style={inputStyle}>
+              <option value="text">Text + button</option>
+              <option value="image">Image + button</option>
+              <option value="mixed">Mixed, image + text + button</option>
+            </select>
+            <p className="muted" style={{ marginTop: -6 }}>
+              {adFormat === "text" && "Headline and optional description, with no image."}
+              {adFormat === "image" && "The image becomes the main creative, with only the action button underneath."}
+              {adFormat === "mixed" && "Image, headline, description, and action button together."}
+            </p>
+
+            {adFormat !== "image" && <input name="headline" placeholder="Headline" required style={inputStyle} />}
+            {adFormat !== "image" && <textarea name="description" placeholder="Description (optional)" style={{ ...inputStyle, minHeight: 90 }} />}
+            {adFormat !== "text" && <input name="imageUrl" placeholder="Image URL" required style={inputStyle} />}
+
             <input name="destinationUrl" placeholder="https://…" required style={inputStyle} />
             <input name="buttonLabel" placeholder="Learn more" style={inputStyle} />
             <label style={{ fontWeight: 700 }}>Frequency weight</label>
             <input name="weight" type="number" min="1" max="1000" defaultValue="100" style={inputStyle} />
-            <p className="muted" style={{ marginTop: -6 }}>Higher weight means this ad is chosen more often relative to your other active ads. If two ads are both 100, they are roughly 50/50. If one is 200 and one is 100, the first is roughly twice as likely to appear.</p>
+            <p className="muted" style={{ marginTop: -6 }}>Higher weight means this ad is chosen more often relative to your other active ads.</p>
             <button style={buttonStyle}>Create ad</button>
           </form>
         </div>
@@ -143,7 +157,7 @@ export default function AdminPage() {
               <div className="row" key={ad.id} style={{ alignItems: "center", gap: 14 }}>
                 <div style={{ flex: 1 }}>
                   <strong>{ad.name}</strong>
-                  <div className="muted">{ad.headline}<br />Frequency weight {ad.weight}</div>
+                  <div className="muted">{ad.format === "text" ? "Text + button" : ad.format === "image" ? "Image + button" : "Mixed"}<br />Frequency weight {ad.weight}</div>
                 </div>
                 <span className="badge">{ad.active ? "Active" : "Off"}</span>
                 <button onClick={() => void deleteAd(ad.id, ad.name)} style={dangerButtonStyle}>Delete</button>
