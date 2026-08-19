@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createAd, createSite, getMetrics, listAds, listSites, softDeleteAd } from "@/lib/db";
+import { createAd, createSite, getMetrics, listAds, listSites, softDeleteAd, type AdFormat } from "@/lib/db";
 
 function authorized(request: NextRequest) {
   const configured = process.env.MADS_ADMIN_KEY;
@@ -34,14 +34,28 @@ export async function POST(request: NextRequest) {
     }
 
     if (body.kind === "ad") {
-      if (!body.name || !body.headline || !body.destinationUrl) return NextResponse.json({ error: "Name, headline and destination URL are required" }, { status: 400 });
+      const format: AdFormat = ["text", "image", "mixed"].includes(body.format) ? body.format : "mixed";
+      const headline = String(body.headline || "").trim().slice(0, 120);
+      const imageUrl = body.imageUrl ? String(body.imageUrl).trim().slice(0, 500) : undefined;
+
+      if (!body.name || !body.destinationUrl) {
+        return NextResponse.json({ error: "Name and destination URL are required" }, { status: 400 });
+      }
+      if ((format === "text" || format === "mixed") && !headline) {
+        return NextResponse.json({ error: "Headline is required for text and mixed ads" }, { status: 400 });
+      }
+      if ((format === "image" || format === "mixed") && !imageUrl) {
+        return NextResponse.json({ error: "Image URL is required for image and mixed ads" }, { status: 400 });
+      }
+
       const ad = await createAd({
         name: String(body.name).slice(0, 80),
-        headline: String(body.headline).slice(0, 120),
+        headline,
         description: String(body.description || "").slice(0, 240),
-        imageUrl: body.imageUrl ? String(body.imageUrl).slice(0, 500) : undefined,
+        imageUrl,
         destinationUrl: String(body.destinationUrl).slice(0, 500),
         buttonLabel: String(body.buttonLabel || "Learn more").slice(0, 40),
+        format,
         active: true,
         weight: Math.max(1, Math.min(1000, Number(body.weight) || 100)),
       });

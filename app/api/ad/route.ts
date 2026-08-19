@@ -18,6 +18,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       ad: {
         id: ad.id,
+        format: ad.format,
         headline: ad.headline,
         description: ad.description,
         imageUrl: ad.imageUrl,
