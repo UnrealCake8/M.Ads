@@ -84,7 +84,7 @@ function siteFromRow(row: Row): Site {
 }
 
 export async function listAds(): Promise<Ad[]> {
-  const rows = await rest<Row[]>("mads_ads?select=*&order=created_at.desc");
+  const rows = await rest<Row[]>("mads_ads?select=*&deleted_at=is.null&order=created_at.desc");
   return rows.map(adFromRow);
 }
 
@@ -99,7 +99,7 @@ export async function getActiveSite(id: string): Promise<Site | null> {
 }
 
 export async function getActiveAd(id: string): Promise<Ad | null> {
-  const rows = await rest<Row[]>(`mads_ads?select=*&id=eq.${encodeURIComponent(id)}&active=eq.true&limit=1`);
+  const rows = await rest<Row[]>(`mads_ads?select=*&id=eq.${encodeURIComponent(id)}&active=eq.true&deleted_at=is.null&limit=1`);
   return rows[0] ? adFromRow(rows[0]) : null;
 }
 
@@ -107,11 +107,7 @@ export async function createSite(input: { name: string; domain: string }): Promi
   const rows = await rest<Row[]>("mads_sites", {
     method: "POST",
     headers: { Prefer: "return=representation" },
-    body: JSON.stringify({
-      name: input.name,
-      domain: input.domain,
-      active: true,
-    }),
+    body: JSON.stringify({ name: input.name, domain: input.domain, active: true }),
   });
   return siteFromRow(rows[0]);
 }
@@ -132,6 +128,14 @@ export async function createAd(input: Omit<Ad, "id" | "createdAt">): Promise<Ad>
     }),
   });
   return adFromRow(rows[0]);
+}
+
+export async function softDeleteAd(id: string) {
+  await rest<void>(`mads_ads?id=eq.${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    headers: { Prefer: "return=minimal" },
+    body: JSON.stringify({ active: false, deleted_at: new Date().toISOString() }),
+  });
 }
 
 export async function recordEvent(event: Omit<MetricEvent, "createdAt">) {
