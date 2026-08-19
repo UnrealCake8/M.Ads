@@ -34,28 +34,29 @@ export async function POST(request: NextRequest) {
     }
 
     if (body.kind === "ad") {
-      const format: AdFormat = ["text", "image", "mixed"].includes(body.format) ? body.format : "mixed";
+      const format: AdFormat = ["text", "image", "mixed", "custom"].includes(body.format) ? body.format : "mixed";
       const headline = String(body.headline || "").trim().slice(0, 120);
       const imageUrl = body.imageUrl ? String(body.imageUrl).trim().slice(0, 500) : undefined;
+      const customHtml = body.customHtml ? String(body.customHtml).slice(0, 50000) : undefined;
+      const waitSeconds = Math.max(0, Math.min(30, Number(body.waitSeconds ?? 3)));
+      const destinationUrl = String(body.destinationUrl || "").trim().slice(0, 500);
 
-      if (!body.name || !body.destinationUrl) {
-        return NextResponse.json({ error: "Name and destination URL are required" }, { status: 400 });
-      }
-      if ((format === "text" || format === "mixed") && !headline) {
-        return NextResponse.json({ error: "Headline is required for text and mixed ads" }, { status: 400 });
-      }
-      if ((format === "image" || format === "mixed") && !imageUrl) {
-        return NextResponse.json({ error: "Image URL is required for image and mixed ads" }, { status: 400 });
-      }
+      if (!body.name) return NextResponse.json({ error: "Name is required" }, { status: 400 });
+      if (format !== "custom" && !destinationUrl) return NextResponse.json({ error: "Destination URL is required" }, { status: 400 });
+      if ((format === "text" || format === "mixed") && !headline) return NextResponse.json({ error: "Headline is required for text and mixed ads" }, { status: 400 });
+      if ((format === "image" || format === "mixed") && !imageUrl) return NextResponse.json({ error: "Image URL is required for image and mixed ads" }, { status: 400 });
+      if (format === "custom" && !customHtml) return NextResponse.json({ error: "Custom HTML is required for custom ads" }, { status: 400 });
 
       const ad = await createAd({
         name: String(body.name).slice(0, 80),
         headline,
         description: String(body.description || "").slice(0, 240),
         imageUrl,
-        destinationUrl: String(body.destinationUrl).slice(0, 500),
+        destinationUrl,
         buttonLabel: String(body.buttonLabel || "Learn more").slice(0, 40),
         format,
+        customHtml,
+        waitSeconds,
         active: true,
         weight: Math.max(1, Math.min(1000, Number(body.weight) || 100)),
       });
@@ -73,7 +74,6 @@ export async function DELETE(request: NextRequest) {
   if (!authorized(request)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const id = request.nextUrl.searchParams.get("id");
   if (!id) return NextResponse.json({ error: "Missing ad id" }, { status: 400 });
-
   try {
     await softDeleteAd(id);
     return NextResponse.json({ ok: true });
