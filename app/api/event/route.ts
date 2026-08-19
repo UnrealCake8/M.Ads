@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getStore } from "@/lib/store";
+import { getActiveAd, getActiveSite, recordEvent } from "@/lib/db";
 
 export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => null);
@@ -7,22 +7,28 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid event" }, { status: 400 });
   }
 
-  const store = getStore();
-  const site = store.sites.find((item) => item.id === body.siteId && item.active);
-  const ad = store.ads.find((item) => item.id === body.adId && item.active);
-  if (!site || !ad) return NextResponse.json({ error: "Unknown site or ad" }, { status: 404 });
+  try {
+    const [site, ad] = await Promise.all([
+      getActiveSite(String(body.siteId)),
+      getActiveAd(String(body.adId)),
+    ]);
 
-  store.events.push({
-    type: body.type,
-    siteId: body.siteId,
-    adId: body.adId,
-    placement: typeof body.placement === "string" ? body.placement.slice(0, 80) : undefined,
-    createdAt: new Date().toISOString(),
-  });
+    if (!site || !ad) return NextResponse.json({ error: "Unknown site or ad" }, { status: 404 });
 
-  return NextResponse.json({ ok: true }, {
-    headers: { "Access-Control-Allow-Origin": "*" },
-  });
+    await recordEvent({
+      type: body.type,
+      siteId: String(body.siteId),
+      adId: String(body.adId),
+      placement: typeof body.placement === "string" ? body.placement.slice(0, 80) : undefined,
+    });
+
+    return NextResponse.json({ ok: true }, {
+      headers: { "Access-Control-Allow-Origin": "*" },
+    });
+  } catch (error) {
+    console.error("M Ads event error", error);
+    return NextResponse.json({ error: "Event service unavailable" }, { status: 503 });
+  }
 }
 
 export async function OPTIONS() {
