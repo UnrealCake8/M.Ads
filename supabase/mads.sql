@@ -23,8 +23,11 @@ create table if not exists public.mads_ads (
   button_label text not null default 'Learn more' check (char_length(button_label) <= 40),
   active boolean not null default true,
   weight integer not null default 100 check (weight between 1 and 1000),
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  deleted_at timestamptz
 );
+
+create index if not exists mads_ads_deleted_at_idx on public.mads_ads (deleted_at);
 
 create table if not exists public.mads_events (
   id bigint generated always as identity primary key,
