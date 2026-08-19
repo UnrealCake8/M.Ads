@@ -38,8 +38,6 @@ export default function TermsPage() {
 
         <h2>Contact</h2>
         <p>Questions about these terms can be sent to <a href="mailto:hello@unrealcake8.site">hello@unrealcake8.site</a>.</p>
-
-        <p className="muted">These terms are a practical platform baseline and should be reviewed by a qualified lawyer before M Ads accepts significant commercial business or relies on them for a legal dispute.</p>
       </section>
     </main>
   );
