@@ -64,6 +64,22 @@ export default function AdminPage() {
     await load();
   }
 
+  async function deleteAd(id: string, name: string) {
+    if (!window.confirm(`Delete ${name}? This removes it from serving, but keeps historical analytics.`)) return;
+    setStatus("Deleting ad…");
+    const response = await fetch(`/api/admin?id=${encodeURIComponent(id)}`, {
+      method: "DELETE",
+      headers: { "x-mads-admin-key": adminKey },
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      setStatus(payload.error || "Could not delete ad");
+      return;
+    }
+    setStatus("Ad deleted");
+    await load();
+  }
+
   return (
     <main className="shell">
       <nav className="nav"><div className="brand">M Ads Admin</div><a className="pill" href="/">Back home</a></nav>
@@ -105,7 +121,9 @@ export default function AdminPage() {
             <input name="imageUrl" placeholder="Image URL (optional)" style={inputStyle} />
             <input name="destinationUrl" placeholder="https://…" required style={inputStyle} />
             <input name="buttonLabel" placeholder="Learn more" style={inputStyle} />
+            <label style={{ fontWeight: 700 }}>Frequency weight</label>
             <input name="weight" type="number" min="1" max="1000" defaultValue="100" style={inputStyle} />
+            <p className="muted" style={{ marginTop: -6 }}>Higher weight means this ad is chosen more often relative to your other active ads. If two ads are both 100, they are roughly 50/50. If one is 200 and one is 100, the first is roughly twice as likely to appear.</p>
             <button style={buttonStyle}>Create ad</button>
           </form>
         </div>
@@ -121,7 +139,16 @@ export default function AdminPage() {
         <div className="panel">
           <h2>Ads</h2>
           <div className="list">
-            {data?.ads.map((ad) => <div className="row" key={ad.id}><div><strong>{ad.name}</strong><div className="muted">{ad.headline}<br />Weight {ad.weight}</div></div><span className="badge">{ad.active ? "Active" : "Off"}</span></div>)}
+            {data?.ads.map((ad) => (
+              <div className="row" key={ad.id} style={{ alignItems: "center", gap: 14 }}>
+                <div style={{ flex: 1 }}>
+                  <strong>{ad.name}</strong>
+                  <div className="muted">{ad.headline}<br />Frequency weight {ad.weight}</div>
+                </div>
+                <span className="badge">{ad.active ? "Active" : "Off"}</span>
+                <button onClick={() => void deleteAd(ad.id, ad.name)} style={dangerButtonStyle}>Delete</button>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -131,3 +158,4 @@ export default function AdminPage() {
 
 const inputStyle = { width: "100%", border: "1px solid #dfe3e8", borderRadius: 14, padding: "12px 14px", font: "inherit", background: "#fff" };
 const buttonStyle = { border: 0, borderRadius: 999, padding: "12px 16px", background: "#111", color: "#fff", font: "inherit", fontWeight: 700, cursor: "pointer" };
+const dangerButtonStyle = { border: "1px solid #fecaca", borderRadius: 999, padding: "10px 14px", background: "#fff1f2", color: "#be123c", font: "inherit", fontWeight: 700, cursor: "pointer" };
