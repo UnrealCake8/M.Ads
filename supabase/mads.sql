@@ -16,11 +16,12 @@ create unique index if not exists mads_sites_domain_unique on public.mads_sites 
 create table if not exists public.mads_ads (
   id text primary key default ('ad_' || substr(replace(gen_random_uuid()::text, '-', ''), 1, 12)),
   name text not null check (char_length(name) between 1 and 80),
-  headline text not null check (char_length(headline) between 1 and 120),
+  headline text not null default '' check (char_length(headline) <= 120),
   description text not null default '' check (char_length(description) <= 240),
   image_url text,
   destination_url text not null check (char_length(destination_url) <= 500),
   button_label text not null default 'Learn more' check (char_length(button_label) <= 40),
+  format text not null default 'mixed' check (format in ('text', 'image', 'mixed')),
   active boolean not null default true,
   weight integer not null default 100 check (weight between 1 and 1000),
   created_at timestamptz not null default now(),
