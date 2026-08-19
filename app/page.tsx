@@ -5,7 +5,10 @@ export default function HomePage() {
     <main className="shell">
       <nav className="nav">
         <div className="brand">M Ads</div>
-        <Link className="pill" href="/admin">Open admin</Link>
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+          <Link className="pill" href="/docs">API Docs</Link>
+          <Link className="pill" href="/admin">Open admin</Link>
+        </div>
       </nav>
 
       <section className="hero">
@@ -15,7 +18,10 @@ export default function HomePage() {
           <p>
             M Ads lets developers trigger short, all-ages advertisements at deliberate moments in their apps and websites. No behavioral profiles, no cross-site tracking, and no creepy retargeting.
           </p>
-          <div className="section code">{`<script src="https://YOUR-DOMAIN/sdk.js" data-site="SITE_ID" async></script>\n\nawait MAds.show({ placement: "quiz-complete" });`}</div>
+          <div className="section code">{`<script src="https://ads.mplace.cc/sdk.js" data-site="SITE_ID"></script>\n\nawait MAds.show({ placement: "quiz-complete" });`}</div>
+          <div style={{ marginTop: 16 }}>
+            <Link className="pill" href="/docs">Read the API docs →</Link>
+          </div>
         </div>
 
         <aside className="panel">
