@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createAd, createSite, getMetrics, listAds, listSites } from "@/lib/db";
+import { createAd, createSite, getMetrics, listAds, listSites, softDeleteAd } from "@/lib/db";
 
 function authorized(request: NextRequest) {
   const configured = process.env.MADS_ADMIN_KEY;
@@ -52,5 +52,19 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("M Ads admin write error", error);
     return NextResponse.json({ error: "Could not save data" }, { status: 503 });
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  if (!authorized(request)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const id = request.nextUrl.searchParams.get("id");
+  if (!id) return NextResponse.json({ error: "Missing ad id" }, { status: 400 });
+
+  try {
+    await softDeleteAd(id);
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    console.error("M Ads delete error", error);
+    return NextResponse.json({ error: "Could not delete ad" }, { status: 503 });
   }
 }
