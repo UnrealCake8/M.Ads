@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "./mplace-family.css";
 
 export const metadata: Metadata = {
   title: "MPlace Ads (M.Ads)",
