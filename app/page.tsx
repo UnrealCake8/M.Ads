@@ -16,6 +16,7 @@ export default function HomePage() {
           <Link className="pill" href="/payouts">Payouts</Link>
           <Link className="pill" href="/contact">Contact</Link>
           <Link className="pill" href="/docs">API Docs</Link>
+          <Link className="pill primary-pill" href="/login">MPlace ID</Link>
           <a className="pill mplace-link" href="https://mplace.cc">MPlace</a>
         </div>
       </nav>
